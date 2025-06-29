@@ -5,7 +5,14 @@ const AudioPlayer = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const prevSongRef = useRef<string | null>(null);
 
-  const { isPlaying, currentSong, playNext } = usePlayerStore();
+  const { isPlaying, currentSong, playNext, setAudioElement } =
+    usePlayerStore();
+
+  useEffect(() => {
+    if (audioRef.current) {
+      setAudioElement(audioRef.current);
+    }
+  }, [setAudioElement]);
 
   useEffect(() => {
     if (isPlaying) audioRef.current?.play();
@@ -16,7 +23,7 @@ const AudioPlayer = () => {
     const audio = audioRef.current;
 
     const handleEnded = () => {
-      playNext();
+      playNext(false);
     };
 
     audio?.addEventListener("ended", handleEnded);

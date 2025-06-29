@@ -12,6 +12,8 @@ interface PlayerStore {
   isShuffling: boolean;
   isRepeating: boolean;
   repeatMode: RepeatMode;
+  audioElement: HTMLAudioElement | null;
+  setAudioElement: (el: HTMLAudioElement) => void;
 
   initializeQueue: (songs: Song[]) => void;
   playAlbum: (songs: Song[], startIndex?: number) => void;
@@ -31,6 +33,9 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   isShuffling: false,
   isRepeating: false,
   repeatMode: "none",
+  audioElement: null,
+  
+  setAudioElement: (el: HTMLAudioElement) => set({ audioElement: el }),
 
   initializeQueue: (songs: Song[]) => {
     set({
