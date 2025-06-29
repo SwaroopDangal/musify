@@ -22,8 +22,17 @@ const formatTime = (seconds: number) => {
 };
 
 const PlaybackControls = () => {
-  const { currentSong, isPlaying, togglePlay, playNext, playPrevious } =
-    usePlayerStore();
+  const {
+    currentSong,
+    isPlaying,
+    togglePlay,
+    playNext,
+    playPrevious,
+    isShuffling,
+    repeatMode,
+    toggleShuffle,
+    toggleRepeat,
+  } = usePlayerStore();
 
   const [volume, setVolume] = useState(75);
   const [currentTime, setCurrentTime] = useState(0);
@@ -43,7 +52,14 @@ const PlaybackControls = () => {
     audio.addEventListener("loadedmetadata", updateDuration);
 
     const handleEnded = () => {
-      usePlayerStore.setState({ isPlaying: false });
+      const { repeatMode } = usePlayerStore.getState();
+
+      if (repeatMode === "one" && audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play();
+      } else {
+        usePlayerStore.getState().playNext(true);
+      }
     };
 
     audio.addEventListener("ended", handleEnded);
@@ -91,7 +107,10 @@ const PlaybackControls = () => {
             <Button
               size="icon"
               variant="ghost"
-              className="hidden sm:inline-flex hover:text-white text-zinc-400"
+              className={`hidden sm:inline-flex ${
+                isShuffling ? "text-white" : "text-zinc-400"
+              } hover:text-white`}
+              onClick={toggleShuffle}
             >
               <Shuffle className="h-4 w-4" />
             </Button>
@@ -122,7 +141,7 @@ const PlaybackControls = () => {
               size="icon"
               variant="ghost"
               className="hover:text-white text-zinc-400"
-              onClick={playNext}
+              onClick={() => playNext(true)}
               disabled={!currentSong}
             >
               <SkipForward className="h-4 w-4" />
@@ -130,9 +149,36 @@ const PlaybackControls = () => {
             <Button
               size="icon"
               variant="ghost"
-              className="hidden sm:inline-flex hover:text-white text-zinc-400"
+              className={`hidden sm:inline-flex ${
+                repeatMode !== "none" ? "text-white" : "text-zinc-400"
+              } hover:text-white`}
+              onClick={toggleRepeat}
+              aria-label={
+                repeatMode === "none"
+                  ? "No repeat"
+                  : repeatMode === "all"
+                  ? "Repeat all"
+                  : "Repeat one"
+              }
             >
-              <Repeat className="h-4 w-4" />
+              <div style={{ position: "relative" }}>
+                <Repeat className="h-4 w-4" />
+                {repeatMode === "one" && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "-6px",
+                      right: "-6px",
+                      fontSize: "10px",
+                      fontWeight: "bold",
+                      color: "white",
+                      userSelect: "none",
+                    }}
+                  >
+                    1
+                  </span>
+                )}
+              </div>
             </Button>
           </div>
 
@@ -142,10 +188,15 @@ const PlaybackControls = () => {
             </div>
             <Slider
               value={[currentTime]}
-              max={duration || 100}
+              max={duration || 1}
               step={1}
-              className="w-full hover:cursor-grab active:cursor-grabbing"
+              className={`w-full ${
+                !currentSong
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:cursor-grab active:cursor-grabbing"
+              }`}
               onValueChange={handleSeek}
+              disabled={!currentSong}
             />
             <div className="text-xs text-zinc-400">{formatTime(duration)}</div>
           </div>
